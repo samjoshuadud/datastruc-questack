@@ -12,66 +12,63 @@ public class ArrayStructureGUI extends JFrame {
     private boolean isStack;
 
     public ArrayStructureGUI() {
-        // Set up the main frame
         setTitle("Data Structure Simulator");
         setSize(900, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(new Color(245, 245, 247));
 
-        // Create main control panel
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 10));
         controlPanel.setBackground(new Color(245, 245, 247));
         controlPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Size input with modern styling
         JPanel sizePanel = createStyledPanel("Size");
         sizeField = new JTextField(5);
         styleTextField(sizeField);
         sizePanel.add(sizeField);
         controlPanel.add(sizePanel);
 
-        // Structure type selection
         JPanel typePanel = createStyledPanel("Structure");
         structureTypeCombo = new JComboBox<>(new String[]{"Queue", "Stack"});
         styleComboBox(structureTypeCombo);
+        structureTypeCombo.addActionListener(e -> {
+            if (dataStructure != null) {
+                isStack = structureTypeCombo.getSelectedItem().equals("Stack");
+                updateOperations();
+                updateDisplay();
+            }
+        });
         typePanel.add(structureTypeCombo);
         controlPanel.add(typePanel);
 
-        // Initialize button
         JButton initButton = new JButton("Initialize");
         styleButton(initButton, new Color(79, 70, 229));
         initButton.addActionListener(e -> initializeDataStructure());
         controlPanel.add(initButton);
 
-        // Operation selection
         JPanel opPanel = createStyledPanel("Operation");
-        operationCombo = new JComboBox<>(new String[]{"Push", "Pop"});
+        operationCombo = new JComboBox<>(new String[]{"Enqueue", "Dequeue", "isEmpty", "isFull", "Peek"});
         styleComboBox(operationCombo);
         operationCombo.addActionListener(e -> updateValueFieldVisibility());
         opPanel.add(operationCombo);
         controlPanel.add(opPanel);
 
-        // Value input
         JPanel valuePanel = createStyledPanel("Value");
         valueField = new JTextField(5);
         styleTextField(valueField);
         valuePanel.add(valueField);
         controlPanel.add(valuePanel);
 
-        // Execute button
         JButton executeButton = new JButton("Execute");
         styleButton(executeButton, new Color(16, 185, 129));
         executeButton.addActionListener(e -> executeOperation());
         controlPanel.add(executeButton);
 
-        // Create display panel
         JPanel displayPanel = new JPanel(new BorderLayout(10, 10));
         displayPanel.setBackground(Color.WHITE);
         displayPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Title panel
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         titlePanel.setBackground(Color.WHITE);
         JLabel titleLabel = new JLabel();
@@ -80,7 +77,6 @@ public class ArrayStructureGUI extends JFrame {
         titlePanel.add(titleLabel);
         displayPanel.add(titlePanel, BorderLayout.NORTH);
 
-        // Display area with modern styling
         displayArea = new JTextArea();
         displayArea.setEditable(false);
         displayArea.setFont(new Font("JetBrains Mono", Font.PLAIN, 14));
@@ -92,11 +88,9 @@ public class ArrayStructureGUI extends JFrame {
         scrollPane.setBackground(Color.WHITE);
         displayPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Add components to frame
         add(controlPanel, BorderLayout.NORTH);
         add(displayPanel, BorderLayout.CENTER);
 
-        // Initial visibility update
         updateValueFieldVisibility();
     }
 
@@ -142,15 +136,26 @@ public class ArrayStructureGUI extends JFrame {
                 return;
             }
 
-            // Initialize data structure
             dataStructure = new ArrayList<>(size);
             isStack = structureTypeCombo.getSelectedItem().equals("Stack");
+            updateOperations();
 
             displayArea.setText("Data structure initialized with max size: " + size + 
                                 "\nType: " + (isStack ? "Stack" : "Queue"));
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Please enter a valid integer for size");
         }
+    }
+
+    private void updateOperations() {
+        String[] operations;
+        if (isStack) {
+            operations = new String[]{"Push", "Pop", "isEmpty", "isFull", "Peek"};
+        } else {
+            operations = new String[]{"Enqueue", "Dequeue", "isEmpty", "isFull", "Peek"};
+        }
+        operationCombo.setModel(new DefaultComboBoxModel<>(operations));
+        updateValueFieldVisibility();
     }
 
     private void executeOperation() {
@@ -161,116 +166,123 @@ public class ArrayStructureGUI extends JFrame {
 
         String operation = (String) operationCombo.getSelectedItem();
 
-        if (operation.equals("Push")) {
-            try {
-                int value = Integer.parseInt(valueField.getText());
-                
-                if (dataStructure.size() >= Integer.parseInt(sizeField.getText())) {
-                    JOptionPane.showMessageDialog(this, "Data structure is full");
+        switch (operation) {
+            case "Push":
+            case "Enqueue":
+                try {
+                    int value = Integer.parseInt(valueField.getText());
+                    
+                    if (dataStructure.size() >= Integer.parseInt(sizeField.getText())) {
+                        JOptionPane.showMessageDialog(this, 
+                            isStack ? "Stack is full" : "Queue is full");
+                        return;
+                    }
+
+                    dataStructure.add(value);
+                    updateDisplay();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Please enter a valid integer value");
+                }
+                break;
+
+            case "Pop":
+            case "Dequeue":
+                if (dataStructure.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, 
+                        isStack ? "Stack is empty" : "Queue is empty");
                     return;
                 }
-
                 if (isStack) {
-                    // Stack push (add to end)
-                    dataStructure.add(value);
+                    dataStructure.remove(dataStructure.size() - 1);
                 } else {
-                    // Queue push (add to end)
-                    dataStructure.add(value);
+                    dataStructure.remove(0);
                 }
-
                 updateDisplay();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid integer value");
-            }
-        } else if (operation.equals("Pop")) {
-            if (dataStructure.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Data structure is empty");
-                return;
-            }
+                break;
 
-            if (isStack) {
-                // Stack pop (remove from end)
-                dataStructure.remove(dataStructure.size() - 1);
-            } else {
-                // Queue pop (remove from beginning)
-                dataStructure.remove(0);
-            }
+            case "isEmpty":
+                JOptionPane.showMessageDialog(this, 
+                    dataStructure.isEmpty() ? 
+                        (isStack ? "Stack is empty" : "Queue is empty") : 
+                        (isStack ? "Stack is not empty" : "Queue is not empty"));
+                break;
 
-            updateDisplay();
+            case "isFull":
+                boolean isFull = dataStructure.size() >= Integer.parseInt(sizeField.getText());
+                JOptionPane.showMessageDialog(this, 
+                    isFull ? 
+                        (isStack ? "Stack is full" : "Queue is full") : 
+                        (isStack ? "Stack is not full" : "Queue is not full"));
+                break;
+
+            case "Peek":
+                if (dataStructure.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, 
+                        isStack ? "Stack is empty" : "Queue is empty");
+                    return;
+                }
+                int peekIndex = isStack ? dataStructure.size() - 1 : 0;
+                String elementPosition = isStack ? "Top" : "Front";
+                JOptionPane.showMessageDialog(this, 
+                    elementPosition + " element: " + dataStructure.get(peekIndex));
+                break;
         }
     }
 
     private void updateDisplay() {
         StringBuilder sb = new StringBuilder();
         String structureType = isStack ? "Stack" : "Queue";
+        int maxSize = Integer.parseInt(sizeField.getText());
         
-        // Header with structure type and size
-        sb.append(String.format("Current %s Contents (%d elements)\n\n", 
-                              structureType, dataStructure.size()));
+        sb.append(String.format("%s Contents (%d/%d elements)\n\n", 
+                              structureType, dataStructure.size(), maxSize));
         
         if (dataStructure.isEmpty()) {
-            sb.append("(empty)\n");
+            sb.append("Empty " + structureType + "\n");
         } else {
-            // Draw top border
-            sb.append("┌");
-            for (int i = 0; i < dataStructure.size(); i++) {
-                sb.append("─────");
-                if (i < dataStructure.size() - 1) sb.append("┬");
-            }
-            sb.append("┐\n");
-
-            // Draw indices
-            sb.append("│");
-            for (int i = 0; i < dataStructure.size(); i++) {
-                sb.append(String.format(" %-3d ", i));
-                sb.append("│");
-            }
-            sb.append("\n");
-
-            // Draw middle border
-            sb.append("├");
-            for (int i = 0; i < dataStructure.size(); i++) {
-                sb.append("─────");
-                if (i < dataStructure.size() - 1) sb.append("┼");
-            }
-            sb.append("┤\n");
-
-            // Draw values
-            sb.append("│");
-            for (int i = 0; i < dataStructure.size(); i++) {
-                sb.append(String.format(" %-3d ", dataStructure.get(i)));
-                sb.append("│");
-            }
-            sb.append("\n");
-
-            // Draw bottom border
-            sb.append("└");
-            for (int i = 0; i < dataStructure.size(); i++) {
-                sb.append("─────");
-                if (i < dataStructure.size() - 1) sb.append("┴");
-            }
-            sb.append("┘\n");
-
-            // Add operation indicators
-            sb.append("\n");
+            // Drawing ng table
             if (isStack) {
-                sb.append("Push/Pop ").append("↑").append("\n");
+                // Stack display (horizontal)
+                for (int i = 0; i < dataStructure.size(); i++) {
+                    sb.append("[ ").append(dataStructure.get(i)).append(" ]");
+                    if (i < dataStructure.size() - 1) {
+                        sb.append(" ");
+                    }
+                }
+                sb.append(" ← Top\n");
             } else {
-                sb.append("Push →      ← Pop\n");
+                // Queue display (horizontal)
+                sb.append("Front → ");
+                for (int i = 0; i < dataStructure.size(); i++) {
+                    sb.append("[ ").append(dataStructure.get(i)).append(" ]");
+                    if (i < dataStructure.size() - 1) {
+                        sb.append(" ");
+                    }
+                }
+                if (dataStructure.size() < maxSize) {
+                    sb.append(" ← Rear\n");
+                } else {
+                    sb.append(" (Full)\n");
+                }
             }
+        }
+
+        // Show empty slots if not full
+        if (!dataStructure.isEmpty() && dataStructure.size() < maxSize) {
+            sb.append("\nEmpty slots: ").append(maxSize - dataStructure.size());
         }
 
         displayArea.setText(sb.toString());
     }
 
     private void updateValueFieldVisibility() {
-        boolean isPush = operationCombo.getSelectedItem().equals("Push");
-        valueField.setVisible(isPush);
-        valueField.getParent().setVisible(isPush);
+        String operation = (String) operationCombo.getSelectedItem();
+        boolean showField = operation.equals("Push") || operation.equals("Enqueue");
+        valueField.setVisible(showField);
+        valueField.getParent().setVisible(showField);
     }
 
     public static void main(String[] args) {
-        // Use SwingUtilities to ensure thread safety
         SwingUtilities.invokeLater(() -> {
             ArrayStructureGUI gui = new ArrayStructureGUI();
             gui.setVisible(true);
